@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The House of Mandi</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .scrollbar-hide::-webkit-scrollbar { 
+      display: none; 
+    }
+    .scrollbar-hide { 
+      -ms-overflow-style: none; 
+      scrollbar-width: none; 
+    }
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { 
+      animation: fade-in-up 0.4s ease-out forwards; 
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect, useRef } = React;
+
+    // Custom Icon wrapper to use Vanilla Lucide safely
+    const Icon = ({ name, size = 24, className = '' }) => {
+      const spanRef = useRef(null);
+
+      useEffect(() => {
+        if (spanRef.current && window.lucide) {
+          spanRef.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
+          window.lucide.createIcons({ root: spanRef.current });
+          
+          const svg = spanRef.current.querySelector('svg');
+          if (svg) {
+            svg.setAttribute('width', size);
+            svg.setAttribute('height', size);
+          }
+        }
+      }, [name, size, className]);
+
+      return <span ref={spanRef} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}></span>;
+    };
+
+    // --- MENU DATA ---
+    const menuData = [
+      {
+        id: 'breakfast', title: 'Breakfast', icon: <Icon name="coffee" size={20} />,
+        items: [
+          { id: 'b1', name: 'PLAIN OMELET', desc: '3 plain eggs served with toasted bread', price: 4500 },
+          { id: 'b2', name: 'SPANISH OMELET', desc: '1 plain eggs omelet with diced onions, tomatoes, green pepper served with toasted bread.', price: 5500 },
+          { id: 'b3', name: 'CHAPATI OMELET', desc: 'Chapati rolled with 3 eggs', price: 5000 },
+          { id: 'b4', name: 'SPECIAL OMELET', desc: '4 eggs, meat, onions, green pepper, tomatoes, cheese and chips', price: 7000 },
+          { id: 'b5', name: 'HOT POT (AGATOGO)', desc: 'A mix of bananas, potatoes, veggies and a choice', price: 9000 },
+          { id: 'b6', name: 'FALAFIL', desc: 'Served with bread', price: 8500 },
+          { id: 'b7', name: 'HUMMUS PLAIN', desc: '', price: 8500 },
+          { id: 'b8', name: 'YEMENI FOSOLIA', desc: '', price: 7000 },
+          { id: 'b9', name: 'CHANA MASALA', desc: 'Chickpeas and Sauce', price: 9000 },
+          { id: 'b10', name: 'MUGALGAL', desc: '', price: 9000 },
+          { id: 'b11', name: 'FOUL', desc: '', price: 9000 },
+          { id: 'b12', name: 'LIVER', desc: '', price: 8500 },
+        ]
+      },
+      {
+        id: 'arabian', title: 'Arabian Food', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'a1', name: 'MANDI - WHOLE GOAT', desc: 'rice, sauce, salads', price: 200000 },
+          { id: 'a2', name: 'MANDI - HALF GOAT', desc: 'rice, sauce, salads', price: 110000 },
+          { id: 'a3', name: 'FULL PLATE MANDI', desc: '3 Pieces of Goat, rice, sauce, salads', price: 13000 },
+          { id: 'a4', name: 'CHICKEN MANDI', desc: '1pc chicken, rice, sauce, salads', price: 8000 },
+          { id: 'a5', name: 'HALF PLATE MANDI', desc: '2 pieces of Goat, rice, sauce, salads', price: 10000 },
+          { id: 'a6', name: 'FAHSA', desc: 'Served With the Bread', price: 13500 },
+        ]
+      },
+      {
+        id: 'biryani', title: 'Biryani Dishes', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'bi1', name: 'Mutton Biryani', desc: 'Rice cooked with herbs and Spices', price: 10000 },
+          { id: 'bi2', name: 'Chicken Biryani', desc: 'Rice cooked with herbs and Spices', price: 9500 },
+          { id: 'bi3', name: 'Vegetable Biryani', desc: 'Rice cooked with herbs and Spices', price: 8000 },
+          { id: 'bi4', name: 'Mix grill Biryani', desc: 'Rice cooked with herbs and Spices', price: 13000 },
+          { id: 'bi5', name: 'Chicken Tikka Biryani', desc: 'Rice cooked with herbs and Spices', price: 10000 },
+          { id: 'bi6', name: 'Fish BIRYANI', desc: 'Rice cooked with herbs and Spices', price: 12000 },
+        ]
+      },
+      {
+        id: 'rice', title: 'Rice', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'r1', name: 'Plain rice', desc: '', price: 5000 },
+          { id: 'r2', name: 'Peas pilau rice', desc: '', price: 6000 },
+          { id: 'r3', name: 'Vegetable pilau rice', desc: '', price: 6000 },
+          { id: 'r4', name: 'Egg fried rice', desc: '', price: 6000 },
+          { id: 'r5', name: 'Chef special rice', desc: 'Cashew Almond & Pistachio fried Rice', price: 9000 },
+        ]
+      },
+      {
+        id: 'main', title: 'Main Course', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'm1', name: 'HAANDI SPECIALS - CHICKEN', desc: 'cooked in a clay pot using a tomato based sauce with blend herbs and spices', price: 10000 },
+          { id: 'm2', name: 'HAANDI SPECIALS - MUTTON', desc: 'cooked in a clay pot using a tomato based sauce with blend herbs and spices', price: 10000 },
+          { id: 'm3', name: 'PANEER TIKKA MASALA', desc: 'Cube of cottage cheese cooked in tandoori mixed with onions, tomatoes and spices on tawa', price: 9500 },
+          { id: 'm4', name: 'METHI PANEER', desc: 'Delight full mix of cottage cheese and sundried fenugreek cooked on tawa with garam masala', price: 9500 },
+          { id: 'm5', name: 'CHILLI PANEER LABABEDAR', desc: 'cottage cheese cooked on tawa with lots of ginger, garlic and fresh coriander leaves', price: 9500 },
+          { id: 'm6', name: 'DAL MAKHINI', desc: 'Black lentils cooked slowly on tandoori in a clay pot flavoured with garlic and onions, spices tomatoes and garnished with fresh cream and coriander leaves', price: 8500 },
+          { id: 'm7', name: 'CHICKEN GINGER', desc: 'Chicken cooked with fresh tomatoes in a ginger based sauce using onions, ginger, garlic, coriander, green chilli and special herbs', price: 10000 },
+          { id: 'm8', name: 'MUTTON GINGER', desc: 'Meat cooked with fresh tomatoes in a ginger based sauce using onions, ginger, garlic, coriander, green chilli and special herbs', price: 10500 },
+          { id: 'm9', name: 'CHICKEN ACHARI SPECIAL', desc: 'Chicken in a unique blend of mixed pickle and spices, prepared to a special authentic recipe by our chef', price: 10000 },
+          { id: 'm10', name: 'MUTTON ACHARI SPECIAL', desc: 'Mutton in a unique blend of mixed pickle and spices, prepared to a special authentic recipe by our chef', price: 10500 },
+          { id: 'm11', name: 'PRAWN TANDOORI MASALA', desc: 'Prawns cooked in a special tandoori sauce garnished with tomato, onion and lemon', price: 22000 },
+          { id: 'm12', name: 'FISH TIKKA MASALA', desc: 'Boneless fish cooked with fresh tomatoes onion, yoghurt, garlic, coriander, green chillies, special herbs and spices', price: 11000 },
+          { id: 'm13', name: 'BUTTER CHICKEN MASALA', desc: 'Cooked with cream, fresh nuts, butter, garlic and mix spices', price: 10000 },
+          { id: 'm14', name: 'CHICKEN TIKKA MASALA', desc: 'Boneless pieces of chicken cooked in tandoori mixed with onion, tomatoes and rara masala', price: 10000 },
+        ]
+      },
+      {
+        id: 'chef', title: 'Chef Special', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'cs1', name: 'PRAWN MAKHANWALA', desc: 'Fresh kingsize prawns marinated and cooked in a special royal gravy garnished with sun dried fenugreek', price: 20000 },
+          { id: 'cs2', name: 'MUTTON ROGANJOSH', desc: 'Dices of mutton cooked in a special way and blended into a thick sauce', price: 10500 },
+          { id: 'cs3', name: 'COCONUT FISH', desc: 'Diced fish delicately cooked in coconut sauce', price: 10000 },
+          { id: 'cs4', name: 'MURG-E-MALAI', desc: 'the ever delightful cubes of chicken cooked in the creamy gravy herbs and spices', price: 9500 },
+          { id: 'cs5', name: 'MUTTON KARAHI', desc: 'boneless mutton cooked with fresh tomatoes, garlic ginger and spices', price: 10500 },
+          { id: 'cs6', name: 'CHICKEN KARAHI', desc: 'boneless Chicken cooked with fresh tomatoes, garlic ginger and spices', price: 10000 },
+        ]
+      },
+      {
+        id: 'african', title: 'African Food', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'af1', name: 'CHICKEN LEG', desc: '', price: 7500 },
+          { id: 'af2', name: 'MIXED FOOD', desc: 'small rice chips and mixed veg', price: 7500 },
+          { id: 'af3', name: 'FULL GRILLED CHICKEN', desc: 'with chips and salads', price: 25000 },
+          { id: 'af4', name: 'HALF GRILLED CHICKEN', desc: 'A choice of leg or breast of chicken on the bone, marinated in yoghurt, herbs and spices cooked in a tandoor oven', price: 13000 },
+        ]
+      },
+      {
+        id: 'veg', title: 'Vegetarian Dishes', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'v1', name: 'Aloo Methi', desc: '', price: 7500 },
+          { id: 'v2', name: 'Aloo Bengan', desc: 'eggplant', price: 7500 },
+          { id: 'v3', name: 'Aloo Gobi', desc: 'Potato & cauliflower', price: 7500 },
+          { id: 'v4', name: 'Aloo Palak', desc: 'spinach', price: 7500 },
+          { id: 'v5', name: 'Aloo Mater', desc: 'green peas', price: 7500 },
+          { id: 'v6', name: 'Mushroom Paneer', desc: '', price: 7500 },
+          { id: 'v7', name: 'Mixed Vegetable', desc: '', price: 8500 },
+          { id: 'v8', name: 'Palak Paneer', desc: 'Spinach & cheese', price: 8000 },
+          { id: 'v9', name: 'Mator Paneer', desc: 'peas & cheese', price: 8500 },
+        ]
+      },
+      {
+        id: 'tandoori', title: 'Tandoori', icon: <Icon name="pizza" size={20} />,
+        items: [
+          { id: 't1', name: 'Rogni Naan', desc: '', price: 1500 },
+          { id: 't2', name: 'Butter Naan', desc: '', price: 1500 },
+          { id: 't3', name: 'Plain Naan', desc: '', price: 1500 },
+          { id: 't4', name: 'Garlic Naan', desc: '', price: 3500 },
+          { id: 't5', name: 'Cheese Naan', desc: '', price: 2500 },
+          { id: 't6', name: 'Tandoori Roti', desc: '', price: 1500 },
+          { id: 't7', name: 'Keema Naan', desc: '', price: 3500 },
+          { id: 't8', name: 'Kulca Naan', desc: '', price: 2000 },
+          { id: 't9', name: 'Chilli Naan', desc: '', price: 2000 },
+          { id: 't10', name: 'Jeera Naan', desc: '', price: 2000 },
+          { id: 't11', name: 'Paratha naan', desc: '', price: 1500 },
+          { id: 't12', name: 'Africa Chapati', desc: '', price: 1500 },
+        ]
+      },
+      {
+        id: 'starters', title: 'Starters', icon: <Icon name="utensils" size={20} />,
+        items: [
+          { id: 'st1', name: 'HOUSE OF MANDI MIX GRILL', desc: 'Fish baryal, Sekh Kebah, meat Tikka, chicken Tikka marinated in yoghurt, herbs and spices cooked over a charcoal oven', price: 20000 },
+          { id: 'st2', name: 'SEEKH KEBAB', desc: '4 pieces Minced meat with onions, green chillies, fresh coriander, herbs and spices cooked over a charcoal oven.', price: 10500 },
+          { id: 'st3', name: 'chicken seikh kebab', desc: '4 pieces Minced chicken with onions, green chillies, fresh coriander, herbs and spices cooked over a charcoal oven.', price: 10000 },
+          { id: 'st4', name: 'PRAWN TIKKA', desc: 'Tiger prawns marinated in yoghurt, herbs and spices cooked over a charcoal oven.', price: 22000 },
+          { id: 'st5', name: 'HARABARA CHICKEN', desc: 'Chicken boneless cube marinated in jungle garlic, mint cashewnuts paste and cooked in charcoal oven', price: 10000 },
+          { id: 'st6', name: 'CHICKEN TIKKA', desc: 'Diced pieces of boneless chicken marinated in yoghurt, herbs and spices cooked over a charcoal oven', price: 10000 },
+          { id: 'st7', name: 'MUTTON TIKKA', desc: 'Diced pieces meat marinated in yoghurt herbs and spices cooked over a charcoal oven', price: 11000 },
+          { id: 'st8', name: 'MALAI BOTI', desc: 'Diced pieces of boneless chicken with almonds green chillie marinated in fresh cream and yoghurt herbs and spices cooked over a charcoal oven', price: 10000 },
+          { id: 'st9', name: 'TANDOORI CHICKEN', desc: 'A choice of leg or breast of chicken on the bone, marinated in yoghurt, herbs and spices cooked in a tandoor oven', price: 22000 },
+          { id: 'st10', name: 'MURG PATANGA', desc: '', price: 8000 },
+          { id: 'st11', name: 'TANGRI KEBAB', desc: '', price: 10000 },
+          { id: 'st12', name: 'MUSHROOM PAKORA', desc: '', price: 7000 },
+          { id: 'st13', name: 'CHICKEN PAKORA', desc: 'Diced chicken of the bone in a special sauce consisting of gram flour and special fresh spices deep fried', price: 8500 },
+          { id: 'st14', name: 'ASSORTED VEGETABLE PAKORA', desc: 'A mixture of vegetables aubergine, onions, potatoes, spinach in a special fresh spices', price: 7000 },
+          { id: 'st15', name: 'Plain Papadums', desc: '', price: 1500 },
+          { id: 'st16', name: 'Spicy Papadums', desc: '', price: 1500 },
+        ]
+      },
+      {
+        id: 'fish', title: 'Fish Dishes', icon: <Icon name="fish" size={20} />,
+        items: [
+          { id: 'f1', name: 'FISH FINGER', desc: 'Served with chips and sauce', price: 8500 },
+          { id: 'f2', name: 'GRILLED FISH', desc: 'Served with chips and sauce', price: 12000 },
+          { id: 'f3', name: 'FISH FRIED', desc: 'Served with chips and sauce', price: 12000 },
+          { id: 'f4', name: 'LOCAL FISH', desc: 'Served with chips and sauce', price: 18000 },
+          { id: 'f5', name: 'FISH BROCHETTE', desc: 'Served with chips and sauce', price: 9500 },
+          { id: 'f6', name: 'FISH STEW', desc: 'Fish, Sauce and Special spices', price: 9500 },
+          { id: 'f7', name: 'FISH TIKKA', desc: 'Fish marinated in yoghurt, herbs and spices cooked over a charcoal oven.', price: 11000 },
+          { id: 'f8', name: 'FISH HARYALI', desc: 'Fish with mint, coriander, chillie green and fresh, cooked over a charcoal oven', price: 11000 },
+        ]
+      },
+      {
+        id: 'fastfood', title: 'Fast Food & Fried Chicken', icon: <Icon name="pizza" size={20} />,
+        items: [
+          { id: 'ff1', name: 'Fried Chicken (1 piece)', desc: 'Served with chips, Sauce', price: 6500 },
+          { id: 'ff2', name: 'Fried Chicken (2 pieces)', desc: 'Served with chips, Sauce', price: 11000 },
+          { id: 'ff3', name: 'Fried Chicken (4 pieces)', desc: 'Served with chips, Sauce', price: 20000 },
+          { id: 'ff4', name: 'Chicken Burger', desc: 'Served with chips and coleslaw salad', price: 8500 },
+          { id: 'ff5', name: 'Beef Burger', desc: 'Served with chips and coleslaw salad', price: 9000 },
+          { id: 'ff6', name: 'Vegetable Burger', desc: 'Served with chips and coleslaw salad', price: 7500 },
+          { id: 'ff7', name: 'Shawrma', desc: 'Served with chips and coleslaw salad', price: 8500 },
+          { id: 'ff8', name: 'Grill Beef Sandwich', desc: 'Served with chips and coleslaw salad', price: 7000 },
+          { id: 'ff9', name: 'Vegetable Sandwich', desc: 'Served with chips and coleslaw salad', price: 6000 },
+          { id: 'ff10', name: 'CHIPS', desc: '', price: 3500 },
+          { id: 'ff11', name: 'MASALA CHIPS', desc: '', price: 4500 },
+          { id: 'ff12', name: 'SAMOSA', desc: '', price: 3000 },
+        ]
+      },
+      {
+        id: 'pizza', title: 'Pizza', icon: <Icon name="pizza" size={20} />,
+        items: [
+          { id: 'pz1', name: 'MARGARITA', desc: 'BIG', price: 10500 },
+          { id: 'pz2', name: 'MARGARITA', desc: 'MEDIUM', price: 8500 },
+          { id: 'pz3', name: 'FOUR SEASON', desc: 'BIG', price: 11500 },
+          { id: 'pz4', name: 'FOUR SEASON', desc: 'MEDIUM', price: 9000 },
+          { id: 'pz5', name: 'CHICKEN', desc: 'BIG', price: 10500 },
+          { id: 'pz6', name: 'CHICKEN', desc: 'MEDIUM', price: 8500 },
+          { id: 'pz7', name: 'SAUSAGE', desc: 'BIG', price: 10000 },
+          { id: 'pz8', name: 'SAUSAGE', desc: 'MEDIUM', price: 8000 },
+          { id: 'pz9', name: 'BEEF', desc: 'BIG', price: 10500 },
+          { id: 'pz10', name: 'BEEF', desc: 'MEDIUM', price: 8500 },
+          { id: 'pz11', name: 'MASHROOM', desc: 'BIG', price: 10500 },
+          { id: 'pz12', name: 'MASHROOM', desc: 'MEDIUM', price: 8500 },
+          { id: 'pz13', name: 'FRESH CREAM', desc: 'BIG', price: 11500 },
+          { id: 'pz14', name: 'FRESH CREAM', desc: 'MEDIUM', price: 9000 },
+        ]
+      },
+      {
+        id: 'drinks', title: 'Beverages & Desserts', icon: <Icon name="cup-soda" size={20} />,
+        items: [
+          { id: 'd1', name: 'African Tea', desc: '', price: 3500 },
+          { id: 'd2', name: 'Black Tea', desc: '', price: 2500 },
+          { id: 'd3', name: 'Hot Chocolate', desc: '', price: 4000 },
+          { id: 'd4', name: 'Hot Lemon & Ginger Tea (DAWA)', desc: '', price: 5000 },
+          { id: 'd5', name: 'House coffee', desc: '', price: 3000 },
+          { id: 'd6', name: 'Cappuccino', desc: '', price: 3500 },
+          { id: 'd7', name: 'Cafe Latte', desc: '', price: 3500 },
+          { id: 'd8', name: 'Iced caramel machiato', desc: '', price: 4500 },
+          { id: 'd9', name: 'SODA', desc: '', price: 1500 },
+          { id: 'd10', name: 'WATER', desc: '', price: 1000 },
+          { id: 'd11', name: 'FRESH JUICE (MANGO/ORANGE/APPLE)', desc: '', price: 5000 },
+          { id: 'd12', name: 'MOJITO WITH FRESH JUICE', desc: '', price: 6000 },
+          { id: 'd13', name: 'HOUSE OF MANDI SMOOTHIE', desc: 'Vanila Natural, sweets Yoghurt, mango and Chocolate', price: 6000 },
+          { id: 'd14', name: 'ICE CREAM (Various Flavors)', desc: 'Vanilla, Chocolate, Mango, etc.', price: 2500 },
+          { id: 'd15', name: 'ARYKAH (ARABIC SWEET)', desc: 'Big Dish for 4 people', price: 16000 },
+          { id: 'd16', name: 'MASSOWP (ARABIC SWEET)', desc: 'Big Dish for 4 people', price: 16000 },
+        ]
+      }
+    ];
+
+    // Formatting helper
+    const formatPrice = (price) => {
+      return `RWF ${price.toLocaleString()}`;
+    };
+
+    // Real placeholder images from Unsplash
+    const galleryImages = [
+      { src: 'https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?auto=format&fit=crop&w=800&q=80', alt: 'Biryani/Mandi Dish' },
+      { src: 'images.png', alt: 'Seekh Kebabs' },
+      { src: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80', alt: 'Grilled Patties with Tomato' },
+      { src: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80', alt: 'Rich Curry Dish' },
+      { src: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=800&q=80', alt: 'Iced Coffee Frappe' },
+      { src: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80', alt: 'Black Tea' },
+      { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', alt: 'House of Mandi Table' }
+    ];
+
+    const Header = ({ activeTab, setActiveTab }) => {
+      const navItems = [
+        { id: 'home', label: 'Home', icon: <Icon name="home" size={18} /> },
+        { id: 'menu', label: 'Menu', icon: <Icon name="menu" size={18} /> },
+        { id: 'gallery', label: 'Gallery', icon: <Icon name="image" size={18} /> },
+        { id: 'about', label: 'About Us', icon: <Icon name="info" size={18} /> },
+        { id: 'contact', label: 'Contact', icon: <Icon name="map-pin" size={18} /> },
+      ];
+
+      return (
+        <header className="bg-white shadow-md sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 py-4 lg:py-5">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-lg md:text-xl shadow-lg shrink-0">
+                  HM
+                </div>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-black text-amber-900 tracking-tight">The House of Mandi</h1>
+                </div>
+              </div>
+              
+              <nav className="flex overflow-x-auto gap-2 scrollbar-hide pb-2 md:pb-0 w-full md:w-auto max-w-full">
+                {navItems.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                      activeTab === item.id 
+                        ? 'bg-amber-600 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-amber-100 hover:text-amber-800'
+                    }`}
+                  >
+                    {item.icon} {item.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </header>
+      );
+    };
+
+    const HomePage = ({ setActiveTab }) => (
+      <div className="animate-fade-in-up -mt-8 mx-auto w-full max-w-none">
+        <div className="relative h-[60vh] min-h-[400px] md:min-h-[500px] bg-amber-900 overflow-hidden flex items-center justify-center rounded-b-3xl">
+          <div className="absolute inset-0 bg-black/60 z-10"></div>
+          {/* Main Hero Background - Real Unsplash Image */}
+          <img 
+            src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1920&q=80" 
+            alt="Hero Feast" 
+            className="absolute inset-0 w-full h-full object-cover opacity-80" 
+            onError={(e) => e.target.style.display='none'}
+          />
+          <div className="relative z-20 text-center px-4 sm:px-8 max-w-4xl">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white mb-4 md:mb-6 drop-shadow-xl">
+              The House of Mandi
+            </h1>
+            <p className="text-lg sm:text-xl md:text-2xl text-amber-50 mb-6 md:mb-8 drop-shadow-md">
+              Experience the authentic taste of Arabian & Multi-Cuisine dining right here in Kigali.
+            </p>
+            <button 
+              onClick={() => setActiveTab('menu')}
+              className="px-6 py-3 md:px-8 md:py-4 bg-amber-600 text-white rounded-full font-bold text-base md:text-lg hover:bg-amber-700 transition-all shadow-xl hover:shadow-amber-600/50 hover:scale-105"
+            >
+              View Our Full Menu
+            </button>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 py-12 md:py-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 text-center">
+           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
+             <div className="mx-auto text-amber-600 mb-4 flex justify-center"><Icon name="utensils" size={40} /></div>
+             <h3 className="text-lg md:text-xl font-bold text-amber-900 mb-2">Authentic Taste</h3>
+             <p className="text-gray-600 text-sm md:text-base">Enjoy perfectly spiced Mandi, Biryani, and Tandoori dishes prepared by expert chefs.</p>
+           </div>
+           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
+             <div className="mx-auto text-amber-600 mb-4 flex justify-center"><Icon name="coffee" size={40} /></div>
+             <h3 className="text-lg md:text-xl font-bold text-amber-900 mb-2">Premium Drinks</h3>
+             <p className="text-gray-600 text-sm md:text-base">Savor our wide selection of great coffees, fresh juices, and signature smoothies.</p>
+           </div>
+           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100 hover:shadow-md transition-shadow sm:col-span-2 md:col-span-1">
+             <div className="mx-auto text-amber-600 mb-4 flex justify-center"><Icon name="map-pin" size={40} /></div>
+             <h3 className="text-lg md:text-xl font-bold text-amber-900 mb-2">Prime Location</h3>
+             <p className="text-gray-600 text-sm md:text-base">Dine-in at Kn 81 et, Kigali, featuring outdoor and rooftop seating.</p>
+           </div>
+        </div>
+      </div>
+    );
+
+    const MenuPage = () => {
+      const [activeCategory, setActiveCategory] = useState(menuData[0].id);
+      const [searchQuery, setSearchQuery] = useState('');
+
+      const filteredMenu = useMemo(() => {
+        if (!searchQuery.trim()) return menuData;
+        return menuData.map(category => {
+          const filteredItems = category.items.filter(item => 
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            item.desc.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          return { ...category, items: filteredItems };
+        }).filter(category => category.items.length > 0);
+      }, [searchQuery]);
+
+      const displayCategories = searchQuery ? filteredMenu : menuData.filter(c => c.id === activeCategory);
+
+      return (
+        <div className="animate-fade-in-up">
+          <div className="relative mb-6 md:mb-8 max-w-xl mx-auto">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Icon name="search" size={20} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-12 pr-4 py-3 md:py-4 rounded-full border-none ring-2 ring-amber-200 focus:ring-amber-500 bg-white shadow-sm text-base md:text-lg outline-none transition-all"
+              placeholder="Search for Mandi, Biryani..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <Icon name="x" size={20} />
+              </button>
+            )}
+          </div>
+
+          {!searchQuery && (
+            <div className="flex overflow-x-auto pb-4 mb-6 md:mb-8 gap-2 md:gap-3 scrollbar-hide snap-x">
+              {menuData.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={`snap-start shrink-0 px-4 md:px-6 py-2 md:py-3 rounded-full flex items-center gap-2 font-semibold text-sm transition-all shadow-sm ${
+                    activeCategory === category.id 
+                      ? 'bg-amber-600 text-white shadow-amber-600/30 ring-2 ring-amber-600 ring-offset-2 ring-offset-orange-50' 
+                      : 'bg-white text-gray-600 hover:bg-amber-50 hover:text-amber-800'
+                  }`}
+                >
+                  {category.icon}
+                  {category.title}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-10 md:space-y-12">
+            {displayCategories.map(category => (
+              <section key={category.id} className="animate-fade-in-up">
+                <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 md:mb-6 flex items-center gap-2 border-b-2 border-amber-200 pb-2">
+                  {category.title}
+                  <span className="text-xs md:text-sm font-normal text-gray-500 bg-amber-100 px-3 py-1 rounded-full">
+                    {category.items.length} items
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {category.items.map(item => (
+                    <div 
+                      key={item.id} 
+                      className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-orange-100 hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-between group"
+                    >
+                      <div className="flex justify-between items-start gap-3 md:gap-4 mb-2">
+                        <h3 className="font-bold text-base md:text-lg text-gray-800 leading-tight group-hover:text-amber-700 transition-colors">
+                          {item.name}
+                        </h3>
+                        <span className="font-black text-amber-600 whitespace-nowrap bg-orange-50 px-2 py-1 rounded-md text-sm">
+                          {formatPrice(item.price)}
+                        </span>
+                      </div>
+                      {item.desc && (
+                        <p className="text-sm text-gray-500 line-clamp-2 mt-1">{item.desc}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+            
+            {displayCategories.length === 0 && (
+              <div className="text-center py-16 md:py-20">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-400">
+                  <Icon name="search" size={40} />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-700 mb-2">No items found</h3>
+                <p className="text-sm md:text-base text-gray-500">Try searching for something else like "Mandi" or "Pizza".</p>
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="mt-6 px-6 py-2 bg-amber-600 text-white rounded-full font-medium hover:bg-amber-700"
+                >
+                  Clear Search
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const GalleryPage = () => (
+      <div className="animate-fade-in-up">
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="text-3xl md:text-4xl font-black text-amber-900 mb-3 md:mb-4">Our Gallery</h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">Take a peek at some of our delicious signature dishes and beverages.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {galleryImages.map((img, idx) => (
+             <div key={idx} className="aspect-square rounded-2xl md:rounded-3xl overflow-hidden shadow-md border-4 border-white group relative bg-gray-200">
+                {/* Image fits perfectly in the box using w-full h-full object-cover */}
+                <img 
+                  src={img.src} 
+                  alt={img.alt} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  onError={(e) => e.target.style.display='none'}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                  <span className="text-white font-bold text-lg px-4 text-center">{img.alt}</span>
+                </div>
+             </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const AboutPage = () => (
+      <div className="animate-fade-in-up max-w-5xl mx-auto">
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-4xl font-black text-amber-900 mb-3 md:mb-4">About Us</h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">Discover a comfortable and vibrant dining environment equipped with premium amenities to make your visit memorable.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100">
+            <h3 className="text-lg md:text-xl font-bold text-amber-800 mb-4 flex items-center gap-2 border-b pb-2">
+              <Icon name="check-circle" size={20} className="text-amber-600"/> Accessibility
+            </h3>
+            <ul className="space-y-3">
+              <li className="flex gap-3 text-sm md:text-base text-gray-700 items-start"><Icon name="check-circle" size={18} className="text-green-500 shrink-0 mt-0.5"/> Wheelchair-accessible car park</li>
+              <li className="flex gap-3 text-sm md:text-base text-gray-700 items-start"><Icon name="check-circle" size={18} className="text-green-500 shrink-0 mt-0.5"/> Wheelchair-accessible entrance</li>
+              <li className="flex gap-3 text-sm md:text-base text-gray-700 items-start"><Icon name="check-circle" size={18} className="text-green-500 shrink-0 mt-0.5"/> Wheelchair-accessible seating</li>
+              <li className="flex gap-3 text-sm md:text-base text-gray-700 items-start"><Icon name="check-circle" size={18} className="text-green-500 shrink-0 mt-0.5"/> Wheelchair-accessible toilet</li>
+            </ul>
+          </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100">
+            <h3 className="text-lg md:text-xl font-bold text-amber-800 mb-4 flex items-center gap-2 border-b pb-2">
+              <Icon name="utensils" size={20} className="text-amber-600"/> Service Options
+            </h3>
+            <ul className="space-y-3 grid grid-cols-1 sm:grid-cols-2">
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Outdoor seating</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Delivery</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Drive-through</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Takeaway</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Dine-in</li>
+            </ul>
+          </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100">
+            <h3 className="text-lg md:text-xl font-bold text-amber-800 mb-4 flex items-center gap-2 border-b pb-2">
+              <Icon name="check-circle" size={20} className="text-amber-600"/> Highlights
+            </h3>
+            <ul className="space-y-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Fireplace</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Rooftop seating</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Great cocktails</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Great coffee</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Great dessert</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Great tea selection</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Sport</li>
+            </ul>
+          </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100">
+            <h3 className="text-lg md:text-xl font-bold text-amber-800 mb-4 flex items-center gap-2 border-b pb-2">
+              <Icon name="check-circle" size={20} className="text-amber-600"/> Popular for
+            </h3>
+            <ul className="space-y-3 grid grid-cols-1 sm:grid-cols-2">
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Breakfast</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Lunch</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Dinner</li>
+              <li className="flex gap-2 text-sm md:text-base text-gray-700 items-center"><Icon name="check-circle" size={18} className="text-green-500 shrink-0"/> Solo dining</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+
+    const ContactPage = () => (
+      <div className="animate-fade-in-up max-w-4xl mx-auto">
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-4xl font-black text-amber-900 mb-3 md:mb-4">Contact & Location</h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">Reach out to us or drop by for a delightful meal.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="space-y-4 md:space-y-6">
+            <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-orange-100 flex items-start gap-4 transition-transform hover:-translate-y-1">
+               <div className="bg-amber-100 p-3 rounded-full text-amber-700"><Icon name="map-pin" size={24}/></div>
+               <div>
+                 <h4 className="font-bold text-lg md:text-xl text-gray-800 mb-1">Our Location</h4>
+                 <p className="text-gray-600 text-base md:text-lg">Kn 81 et, Kigali</p>
+               </div>
+            </div>
+            
+            <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-orange-100 flex items-start gap-4 transition-transform hover:-translate-y-1">
+               <div className="bg-amber-100 p-3 rounded-full text-amber-700"><Icon name="phone" size={24}/></div>
+               <div>
+                 <h4 className="font-bold text-lg md:text-xl text-gray-800 mb-1">Phone Number</h4>
+                 <a href="tel:0786675051" className="text-amber-600 hover:text-amber-800 font-medium text-base md:text-lg">0786675051</a>
+               </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100">
+             <h3 className="text-xl md:text-2xl font-bold text-amber-800 mb-4 md:mb-6 flex items-center gap-3 border-b pb-4">
+               <Icon name="clock" size={24} className="text-amber-600"/> Opening Hours
+             </h3>
+             <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-700">
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <span className="font-medium text-base md:text-lg">Thursday</span> <span className="font-semibold text-amber-900">9 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <div>
+                    <span className="font-medium text-base md:text-lg">Friday</span><br/>
+                    <span className="text-xs text-amber-600 font-medium">(Good Friday) Hours might differ</span>
+                 </div> 
+                 <span className="font-semibold text-amber-900 text-right">9 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <span className="font-medium text-base md:text-lg">Saturday</span> <span className="font-semibold text-amber-900">8 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <span className="font-medium text-base md:text-lg">Sunday</span> <span className="font-semibold text-amber-900">9 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <div>
+                    <span className="font-medium text-base md:text-lg">Monday</span><br/>
+                    <span className="text-xs text-amber-600 font-medium">(Easter Monday) Hours might differ</span>
+                 </div> 
+                 <span className="font-semibold text-amber-900 text-right">9 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center border-b border-gray-50 pb-2">
+                 <div>
+                    <span className="font-medium text-base md:text-lg">Tuesday</span><br/>
+                    <span className="text-xs text-amber-600 font-medium">(Tutsi Genocide Memorial Day)<br/>Hours might differ</span>
+                 </div> 
+                 <span className="font-semibold text-amber-900 text-right">9 am – 11:30 pm</span>
+               </li>
+               <li className="flex justify-between items-center pt-1">
+                 <span className="font-medium text-base md:text-lg">Wednesday</span> <span className="font-semibold text-amber-900">9 am – 11:30 pm</span>
+               </li>
+             </ul>
+          </div>
+        </div>
+      </div>
+    );
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('home');
+
+      return (
+        <div className="min-h-screen bg-orange-50 font-sans text-gray-800 flex flex-col">
+          <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+          
+          <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 md:py-8">
+            {activeTab === 'home' && <HomePage setActiveTab={setActiveTab} />}
+            {activeTab === 'menu' && <MenuPage />}
+            {activeTab === 'gallery' && <GalleryPage />}
+            {activeTab === 'about' && <AboutPage />}
+            {activeTab === 'contact' && <ContactPage />}
+          </main>
+
+          <footer className="bg-amber-900 text-amber-100/60 py-6 text-center text-sm px-4">
+             <p>© {new Date().getFullYear()} The House of Mandi, Kigali. All Rights Reserved.</p>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
